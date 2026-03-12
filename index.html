@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7-Day Rainfall Tracker</title>
+<style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px; }
+        h1 { font-size: 1.4rem; color: #1a4e79; }
+        .day { display: flex; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
+        .day:nth-child(odd) { background: #f4f9ff; }
+        .rain { font-weight: bold; color: #0078d4; }
+        .rain.heavy { color: #c00; }
+        #status { color: #888; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>🌧 Last 7 Days Rainfall</h1>
+<p id="status">Loading...</p>
+<div id="data"></div>
+ 
+    <script>
+        const LATITUDE = 16.01;
+        const LONGITUDE = 108.239;
+        const TIMEZONE = "Asia/Ho_Chi_Minh";
+ 
+        function getDateRange() {
+            const today = new Date();
+            const end = new Date(today);
+            end.setDate(end.getDate() - 0); // archive API lags ~1 day
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6); // 7 days total
+            return {
+                start: start.toISOString().split('T')[0],
+                end: end.toISOString().split('T')[0],
+            };
+        }
+ 
+        async function fetchRainfall() {
+            const { start, end } = getDateRange();
+            document.getElementById('status').textContent = `Fetching ${start} → ${end}...`;
+ 
+            const url = new URL("https://archive-api.open-meteo.com/v1/archive");
+            url.searchParams.set("latitude", LATITUDE);
+            url.searchParams.set("longitude", LONGITUDE);
+            url.searchParams.set("start_date", start);
+            url.searchParams.set("end_date", end);
+            url.searchParams.set("daily", "precipitation_sum");
+            url.searchParams.set("timezone", TIMEZONE);
+ 
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const dates = data.daily.time;
+                const rain = data.daily.precipitation_sum;
+ 
+                document.getElementById('status').textContent = `Period: ${start} → ${end}`;
+                document.getElementById('data').innerHTML = dates.map((date, i) => {
+                    const mm = rain[i] ?? 0;
+                    const heavyClass = mm >= 10 ? 'heavy' : '';
+                    return `<div class="day"><span>${date}</span><span class="rain ${heavyClass}">${mm} mm</span></div>`;
+                }).join('');
+            } catch (err) {
+                document.getElementById('status').textContent = 'Error fetching data.';
+                console.error(err);
+            }
+        }
+ 
+        fetchRainfall();
+</script>
+</body>
+</html>
