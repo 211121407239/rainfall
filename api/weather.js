@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     // Step 1: Login
-    const login = await fetch("https://www.vrain.vn/api/vrain/auth/login", {
+    const login = await fetch("https://www.vrain.vn/api/vrain/public/v1/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
